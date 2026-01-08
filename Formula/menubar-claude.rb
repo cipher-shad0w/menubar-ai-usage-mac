@@ -16,7 +16,10 @@ class MenubarClaude < Formula
            "-configuration", "Release",
            "-derivedDataPath", "build",
            "SYMROOT=build",
-           "CONFIGURATION_BUILD_DIR=build/Release"
+           "CONFIGURATION_BUILD_DIR=build/Release",
+           "CODE_SIGN_IDENTITY=",
+           "CODE_SIGNING_REQUIRED=NO",
+           "CODE_SIGNING_ALLOWED=NO"
 
     # Install the app
     prefix.install "build/Release/menubar-claude.app"
