@@ -1,12 +1,12 @@
 [project]
-name = "waybar-ai-usage"
-version = "0.1.1"
-description = "Monitor Claude and ChatGPT API usage in Waybar via browser cookies"
+name = "menubar-ai-usage-mac"
+version = "0.1.0"
+description = "Monitor Claude API usage in mac menubar via browser cookies"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 keywords = ["waybar", "claude", "chatgpt", "openai", "usage", "monitor"]
 authors = [
-    { name = "NihilDigit" }
+    { name = "cipher-shad0w" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -23,9 +23,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NihilDigit/waybar-ai-usage"
-Repository = "https://github.com/NihilDigit/waybar-ai-usage"
-Issues = "https://github.com/NihilDigit/waybar-ai-usage/issues"
+Homepage = "https://github.com/cipher-shad0w/menubar-ai-usage-mac"
+Repository = "https://github.com/cipher-shad0w/menubar-ai-usage-mac"
+Issues = "https://github.com/cipher-shad0w/menubar-ai-usage-mac/issues"
 
 [project.scripts]
 claude-usage = "claude:main"
@@ -36,7 +36,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["claude.py", "codex.py", "common.py"]
+packages = ["claude.py", "common.py"]
 
 [dependency-groups]
 dev = []
