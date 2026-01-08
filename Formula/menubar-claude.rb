@@ -2,7 +2,7 @@ class MenubarClaude < Formula
   desc "macOS menu bar app for monitoring Claude AI usage"
   homepage "https://github.com/cipher-shad0w/menubar-ai-usage-mac"
   url "https://github.com/cipher-shad0w/menubar-ai-usage-mac/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "YOUR_SHA256_HERE"
+  sha256 "fd66d1b64b9efab315be7a0f3b41d726f17b03b8d85f4c8e0ae810724c503161"
   license "MIT"
 
   depends_on "uv"
