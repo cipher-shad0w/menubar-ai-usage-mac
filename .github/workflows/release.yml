@@ -30,6 +30,11 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Sign app
+        run: |
+          cd ~/Library/Developer/Xcode/DerivedData/menubar-claude-*/Build/Products/Release
+          codesign -s - --force --deep menubar-claude.app
+
       - name: Create zip
         run: |
           cd ~/Library/Developer/Xcode/DerivedData/menubar-claude-*/Build/Products/Release
