@@ -1,5 +1,5 @@
 cask "menubar-claude" do
-  version "0.1.0"
+  version "0.1.3"
   sha256 "d07c19d1f4adf0119b89295ea0597fc1bfb463a7b15de60e1b514c8517ec0b56"
 
   url "https://github.com/cipher-shad0w/menubar-ai-usage-mac/releases/download/v#{version}/menubar-claude.zip"
