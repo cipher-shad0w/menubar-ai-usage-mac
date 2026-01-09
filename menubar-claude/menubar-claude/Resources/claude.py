@@ -52,7 +52,7 @@ def get_claude_usage() -> dict:
             try:
                 cj = browser_func(domain_name=CLAUDE_DOMAIN)
                 cookies = {c.name: c.value for c in cj}
-                if cookies. get("lastActiveOrg"):
+                if cookies.get("lastActiveOrg"):
                     break
             except Exception:
                 continue
