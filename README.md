@@ -39,8 +39,8 @@ The app displays your current Claude usage percentage in the menu bar and provid
 ### Homebrew (Recommended)
 
 ```bash
-brew tap cipher-shad0w/menubar-claude
-brew install menubar-claude
+brew tap cipher-shad0w/homebrew-menubar-claude
+brew install --cask menubar-claude
 ```
 
 ### Manual Installation
