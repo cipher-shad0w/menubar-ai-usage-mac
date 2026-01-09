@@ -48,7 +48,7 @@ brew install --cask menubar-claude
 1. Clone the repository:
 ```bash
 git clone https://github.com/cipher-shad0w/menubar-ai-usage-mac.git
-cd waybar-ai-usage-mac
+cd menubar-ai-usage-mac
 ```
 
 2. Install `uv` if not already installed:
@@ -110,18 +110,29 @@ menubar-claude/
 ├── menubar-claude/
 │   ├── menubar_claudeApp.swift      # Main app entry point
 │   ├── Models/                       # Data models
-│   │   ├── ClaudeUsageModels.swift
-│   │   └── SupportedBrowser.swift
+│   │   ├── ClaudeUsageModels.swift  # Usage data structures & errors
+│   │   └── SupportedBrowser.swift   # Browser detection
 │   ├── ViewModels/                   # Business logic
-│   │   └── ClaudeUsageViewModel.swift
+│   │   └── ClaudeUsageViewModel.swift # App state management
 │   ├── Views/                        # UI components
-│   │   └── ClaudeUsageView.swift
+│   │   └── ClaudeUsageView.swift    # SwiftUI interface
+│   ├── Services/                     # Service layer (NEW)
+│   │   └── PythonScriptService.swift # Python script execution
 │   └── Resources/                    # Python scripts
-│       ├── claude.py
-│       ├── common.py
-│       └── pyproject.toml
+│       ├── claude.py                 # Claude API client
+│       ├── common.py                 # Shared utilities
+│       └── pyproject.toml            # Python dependencies
 └── menubar-claude.xcodeproj/         # Xcode project files
 ```
+
+### Design Patterns
+
+The app follows clean architecture principles:
+
+- **MVVM Pattern**: Separation of UI (Views), business logic (ViewModels), and data (Models)
+- **Service Layer**: Protocol-based services for dependency injection and testability
+- **Error Handling**: Structured error types with user-friendly messages
+- **Configuration**: Constants-based configuration for maintainability
 
 ## Configuration
 
@@ -169,6 +180,14 @@ If the app can't access browser cookies, you may need to grant permissions in:
 3. Ensure `uv` is installed: `brew install uv`
 4. Build and run the project (⌘R)
 
+### Code Quality
+
+The codebase follows Swift and Python best practices:
+
+- **Swift**: Protocol-oriented design, comprehensive documentation, thread-safe operations
+- **Python**: Type hints, structured error handling, dependency management via `uv`
+- **Architecture**: Clean separation of concerns with MVVM + Service Layer pattern
+
 ### Testing Python Scripts
 
 You can test the Python backend independently:
@@ -182,11 +201,18 @@ uv run python claude.py --json
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
+### Contribution Guidelines
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+3. Make your changes:
+   - Follow Swift/Python style conventions
+   - Add documentation for new functions
+   - Update README if adding features
+4. Test your changes thoroughly
+5. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+6. Push to the branch (`git push origin feature/AmazingFeature`)
+7. Open a Pull Request
 
 ## License
 
@@ -202,13 +228,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Related Projects
 
 - [waybar-ai-usage](https://github.com/cipher-shad0w/waybar-ai-usage) - Linux/Waybar version for monitoring Claude and ChatGPT usage
-
-## Roadmap
-
-- [ ] Notification system for high usage alerts
-- [ ] Usage history graphs
-- [ ] Add as login item
-- [ ] Custom refresh intervals
 
 ## Support
 
