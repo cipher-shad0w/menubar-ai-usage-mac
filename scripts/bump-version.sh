@@ -9,6 +9,7 @@ fi
 NEW_VERSION="$1"
 
 echo "📦 Bumping version to $NEW_VERSION..."
+echo ""
 
 # Update version in Xcode project
 sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $NEW_VERSION;/g" menubar-claude/menubar-claude.xcodeproj/project.pbxproj
@@ -16,12 +17,42 @@ sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $NEW_VERSION;/g" men
 # Update version in pyproject.toml
 sed -i '' "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
 
-echo "✅ Version updated to $NEW_VERSION"
+echo "✅ Version files updated to $NEW_VERSION"
 echo ""
-echo "Next steps:"
-echo "  git add -A"
-echo "  git commit -m '🔖 Bump version to $NEW_VERSION'"
-echo "  git push origin main"
-echo "  git tag v$NEW_VERSION"
-echo "  git push origin v$NEW_VERSION"
-echo "  gh release create v$NEW_VERSION --generate-notes"
+
+# Check if there are changes
+if git diff --quiet; then
+  echo "⚠️  No changes detected. Version might already be set."
+  exit 0
+fi
+
+# Show changes
+echo "📝 Changes:"
+git diff menubar-claude/menubar-claude.xcodeproj/project.pbxproj pyproject.toml
+echo ""
+
+# Commit changes
+echo "💾 Committing changes..."
+git add menubar-claude/menubar-claude.xcodeproj/project.pbxproj pyproject.toml
+git commit -m "🔖 Bump version to $NEW_VERSION"
+
+# Push to main
+echo "⬆️  Pushing to main..."
+git push origin main
+
+# Create and push tag
+echo "🏷️  Creating tag v$NEW_VERSION..."
+git tag "v$NEW_VERSION"
+git push origin "v$NEW_VERSION"
+
+# Create GitHub release
+echo "🚀 Creating GitHub release..."
+gh release create "v$NEW_VERSION" --generate-notes --title "v$NEW_VERSION"
+
+echo ""
+echo "✨ Release v$NEW_VERSION created successfully!"
+echo ""
+echo "📋 Next steps:"
+echo "  1. Wait for GitHub Actions to build the app (~5 minutes)"
+echo "  2. Check: https://github.com/cipher-shad0w/menubar-ai-usage-mac/actions"
+echo "  3. Once done, users can update with: brew upgrade --cask menubar-claude"
