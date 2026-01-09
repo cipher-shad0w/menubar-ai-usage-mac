@@ -2,7 +2,7 @@
 set -e
 
 if [ -z "$1" ]; then
-  echo "Usage: ./scripts/bump-version.sh 0.1.1"
+  echo "Error: Version argument required"
   exit 1
 fi
 
@@ -52,7 +52,3 @@ gh release create "v$NEW_VERSION" --generate-notes --title "v$NEW_VERSION"
 echo ""
 echo "✨ Release v$NEW_VERSION created successfully!"
 echo ""
-echo "📋 Next steps:"
-echo "  1. Wait for GitHub Actions to build the app (~5 minutes)"
-echo "  2. Check: https://github.com/cipher-shad0w/menubar-ai-usage-mac/actions"
-echo "  3. Once done, users can update with: brew upgrade --cask menubar-claude"
