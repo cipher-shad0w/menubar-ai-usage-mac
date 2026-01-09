@@ -1,0 +1,72 @@
+name: Build and Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-update-cask:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout app repository
+        uses: actions/checkout@v4
+
+      - name: Get release version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build app
+        run: |
+          xcodebuild -project menubar-claude/menubar-claude.xcodeproj \
+            -scheme menubar-claude \
+            -configuration Release \
+            clean build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Create zip
+        run: |
+          cd ~/Library/Developer/Xcode/DerivedData/menubar-claude-*/Build/Products/Release
+          zip -r menubar-claude.zip menubar-claude.app
+          mv menubar-claude.zip $GITHUB_WORKSPACE/
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          SHA256=$(shasum -a 256 menubar-claude.zip | awk '{print $1}')
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "App ZIP SHA256: $SHA256"
+
+      - name: Upload app to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ steps.version.outputs.tag }} menubar-claude.zip
+
+      - name: Checkout tap repository
+        uses: actions/checkout@v4
+        with:
+          repository: cipher-homebrew/homebrew-menubar-claude
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          path: tap
+
+      - name: Update Cask in tap
+        run: |
+          mkdir -p tap/Casks
+          cp Casks/menubar-claude.rb tap/Casks/menubar-claude.rb
+          cd tap/Casks
+          sed -i '' 's/version ".*"/version "${{ steps.version.outputs.version }}"/' menubar-claude.rb
+          sed -i '' 's/sha256 ".*"/sha256 "${{ steps.sha256.outputs.sha256 }}"/' menubar-claude.rb
+
+      - name: Commit and push to tap
+        run: |
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/menubar-claude.rb
+          git commit -m "🔄 Update cask to version ${{ steps.version.outputs.version }}"
+          git push
