@@ -3,6 +3,8 @@ import SwiftUI
 struct ClaudeUsageView: View {
     @EnvironmentObject var viewModel: ClaudeUsageViewModel
 
+    @State private var expandedFooter: Bool = false
+
     var body: some View {
         VStack(spacing: 16) {
             // Header
@@ -20,8 +22,6 @@ struct ClaudeUsageView: View {
             } else {
                 usageContentView
             }
-
-            Divider()
 
             // Footer
             footerView
@@ -315,30 +315,93 @@ struct ClaudeUsageView: View {
     }
 
     private var footerView: some View {
-        HStack {
-            if let lastUpdated = viewModel.lastUpdated {
-                Text("Updated: \(lastUpdated, style: .relative)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+        VStack(spacing: 8) {
+            HStack {
+                Button {
+                    expandedFooter.toggle()
+                } label: {
+                    if expandedFooter {
+                        HStack {
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .frame(width: 20, height: 20)
+                                .contentShape(Rectangle())
+
+                            Rectangle()
+                                .fill(Color.secondary.opacity(0.3))
+                                .frame(height: 1)
+                        }
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
+                    }
+                }
+                .buttonStyle(.borderless)
+
+                Spacer()
             }
 
-            Spacer()
+            if expandedFooter {
+                HStack {
+                    expandedFooterView
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(.leading, 4)
+    }
 
-            Button(action: { viewModel.refresh() }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Refresh")
+    private var expandedFooterView: some View {
+        VStack(spacing: 8) {
+            // toggle for launch at login
+            HStack {
+                Text("Launch at Login")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Toggle(isOn: Binding(
+                    get: { viewModel.launchAtLogin },
+                    set: { _ in viewModel.toggleLaunchAtLogin() }
+                )) {
+                    EmptyView()
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+            }
+
+            HStack {
+                if let lastUpdated = viewModel.lastUpdated {
+                    Text("Updated: \(lastUpdated, style: .relative)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Button(action: { viewModel.refresh() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Refresh")
+                    }
+                    .font(.caption)
+                }
+                //.buttonStyle(.borderless)
+                .disabled(viewModel.isLoading)
+            }
+
+            HStack {
+                //Spacer()
+
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
                 }
                 .font(.caption)
             }
-            .buttonStyle(.borderless)
-            .disabled(viewModel.isLoading)
-
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
-            }
-            .buttonStyle(.borderless)
-            .font(.caption)
+            .padding(.top, 4)
         }
     }
 

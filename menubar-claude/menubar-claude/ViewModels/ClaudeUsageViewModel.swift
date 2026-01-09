@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import OSLog
+import ServiceManagement
 
 /// ViewModel for Claude usage monitoring
 @MainActor
@@ -40,6 +41,9 @@ class ClaudeUsageViewModel: ObservableObject {
 
     /// Last update timestamp
     @Published private(set) var lastUpdated: Date?
+
+    /// Launch at login state
+    @Published var launchAtLogin: Bool = false
 
     // MARK: - Computed Properties
 
@@ -93,6 +97,9 @@ class ClaudeUsageViewModel: ObservableObject {
         }
 
         logger.info("Initialized ClaudeUsageViewModel with script path: \(self.pythonScriptPath)")
+
+        // Check initial launch at login state
+        self.launchAtLogin = Self.checkLaunchAtLoginStatus()
 
         // Fetch data immediately on init and start auto-refresh
         Task { @MainActor in
@@ -331,5 +338,31 @@ class ClaudeUsageViewModel: ObservableObject {
 
         // Log status
         logger.info("Storage updated - 5h: \(self.fiveHourPercent)% (\(self.fiveHourStatus.description)), 7d: \(self.sevenDayPercent)% (\(self.sevenDayStatus.description))")
+    }
+
+    // MARK: - Launch at Login
+
+    /// Check if the app is set to launch at login
+    private static func checkLaunchAtLoginStatus() -> Bool {
+        return SMAppService.mainApp.status == .enabled
+    }
+
+    /// Toggle launch at login setting
+    func toggleLaunchAtLogin() {
+        do {
+            if launchAtLogin {
+                // Disable launch at login
+                try SMAppService.mainApp.unregister()
+                launchAtLogin = false
+                logger.info("Disabled launch at login")
+            } else {
+                // Enable launch at login
+                try SMAppService.mainApp.register()
+                launchAtLogin = true
+                logger.info("Enabled launch at login")
+            }
+        } catch {
+            logger.error("Failed to toggle launch at login: \(error.localizedDescription)")
+        }
     }
 }
