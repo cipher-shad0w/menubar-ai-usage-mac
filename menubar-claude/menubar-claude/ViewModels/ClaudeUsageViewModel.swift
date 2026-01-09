@@ -13,6 +13,28 @@ import ServiceManagement
 /// ViewModel for Claude usage monitoring
 @MainActor
 class ClaudeUsageViewModel: ObservableObject {
+    // MARK: - Constants
+
+    private enum Config {
+        /// Default interval between auto-refresh checks (in seconds)
+        static let defaultRefreshInterval: TimeInterval = 30
+
+        /// Timeout for UV process execution (in seconds)
+        static let uvProcessTimeout: TimeInterval = 10
+
+        /// Percentage threshold for "low" usage status
+        static let lowUsageThreshold: Double = 50.0
+
+        /// Percentage threshold for "high" usage status (7-day window priority)
+        static let highUsageThreshold: Double = 80.0
+
+        /// Percentage threshold for "critical" usage status
+        static let criticalUsageThreshold: Double = 95.0
+
+        /// Maximum usage percentage (exhausted)
+        static let exhaustedThreshold: Double = 100.0
+    }
+
     // MARK: - Logger
     private let logger = Logger(subsystem: "com.menubar.claude", category: "ClaudeUsageViewModel")
 
@@ -59,7 +81,7 @@ class ClaudeUsageViewModel: ObservableObject {
 
     /// Primary window to display (7-day if >80%, otherwise 5-hour)
     var primaryWindow: (percent: Double, name: String, window: UsageWindow?) {
-        if sevenDayPercent >= 80 {
+        if sevenDayPercent >= Config.highUsageThreshold {
             return (sevenDayPercent, "7-Day", sevenDayWindow)
         } else {
             return (fiveHourPercent, "5-Hour", fiveHourWindow)
@@ -68,7 +90,7 @@ class ClaudeUsageViewModel: ObservableObject {
 
     /// Whether the service is exhausted (7-day at 100%)
     var isExhausted: Bool {
-        sevenDayPercent >= 100
+        sevenDayPercent >= Config.exhaustedThreshold
     }
 
     // MARK: - Private Properties
@@ -104,7 +126,7 @@ class ClaudeUsageViewModel: ObservableObject {
         // Fetch data immediately on init and start auto-refresh
         Task { @MainActor in
             await self.fetchUsage()
-            self.startAutoRefresh(interval: 30)
+            self.startAutoRefresh(interval: Config.defaultRefreshInterval)
         }
     }
 
@@ -168,7 +190,26 @@ class ClaudeUsageViewModel: ObservableObject {
 
     // MARK: - Private Methods
 
-    /// Find uv executable in common locations, with login shell fallback
+    /// Locates the UV package manager executable using a multi-stage search strategy.
+    ///
+    /// UV (https://docs.astral.sh/uv/) is a fast Python package installer required
+    /// to execute the Claude API client script.
+    ///
+    /// - Returns: Absolute path to the `uv` executable, or `nil` if not found
+    ///
+    /// ## Search Strategy
+    /// 1. **Fast Path**: Checks common installation locations:
+    ///    - `~/.local/bin/uv` (pipx/cargo install)
+    ///    - `/usr/local/bin/uv` (manual install)
+    ///    - `~/.cargo/bin/uv` (Rust cargo)
+    ///    - `/opt/homebrew/bin/uv` (Homebrew on Apple Silicon)
+    ///
+    /// 2. **Fallback**: Executes login shell (`zsh -l -c "which uv"`) to respect
+    ///    user's PATH configuration (e.g., custom shell profiles)
+    ///
+    /// ## Performance
+    /// - Fast path: ~1-5ms (file existence checks)
+    /// - Fallback: ~100-300ms (shell process overhead)
     private func findUvPath() -> String? {
         let fileManager = FileManager.default
         let homeDir = fileManager.homeDirectoryForCurrentUser.path
@@ -221,7 +262,28 @@ class ClaudeUsageViewModel: ObservableObject {
         return nil
     }
 
-    /// Run Python script and return output
+    /// Executes the Python script to fetch Claude API usage data.
+    ///
+    /// This method spawns a subprocess to run the `claude.py` script using the UV
+    /// package manager. The script authenticates using browser cookies and returns
+    /// JSON-formatted usage data.
+    ///
+    /// - Returns: Raw stdout from the Python script (JSON + optional text)
+    /// - Throws: `ClaudeUsageError` for various failure conditions:
+    ///   - `.uvNotFound`: UV executable not located on system
+    ///   - `.scriptExecutionFailed`: Python runtime errors
+    ///   - `.cookieAuthenticationFailed`: No valid Claude session found
+    ///   - `.networkError`: API connection issues
+    ///   - `.forbidden`: 403 response from Claude API
+    ///
+    /// ## Process Configuration
+    /// - **Executable**: `uv run python <script_path>`
+    /// - **Working Directory**: Parent directory of `claude.py` (for relative imports)
+    /// - **Timeout**: None (Python script has internal 10s timeout)
+    ///
+    /// ## Error Handling
+    /// Parses stderr to identify specific error types using `ClaudeUsageError.parse()`.
+    /// Exit status != 0 triggers structured error parsing.
     private func runPythonScript() async throws -> String {
         let process = Process()
         let pipe = Pipe()
@@ -267,7 +329,21 @@ class ClaudeUsageViewModel: ObservableObject {
         return output
     }
 
-    /// Parse JSON output from Python script
+    /// Parses JSON response from Python script, handling mixed output.
+    ///
+    /// The Python script may output both structured JSON and human-readable text.
+    /// This method extracts only the JSON object by counting braces to identify
+    /// the complete JSON structure, ignoring any additional text before or after.
+    ///
+    /// - Parameter output: Raw output string from Python script execution
+    /// - Returns: Parsed `ClaudeUsageResponse` containing usage data
+    /// - Throws: `ClaudeUsageError.parseError` if JSON extraction or decoding fails
+    ///
+    /// ## Algorithm
+    /// 1. Splits output into lines
+    /// 2. Tracks brace count to identify JSON object boundaries
+    /// 3. Extracts lines between opening `{` and matching closing `}`
+    /// 4. Decodes extracted JSON into `ClaudeUsageResponse`
     private func parseJSON(from output: String) throws -> ClaudeUsageResponse {
         // The script outputs JSON followed by separator and human-readable format
         // We need to extract just the JSON part
